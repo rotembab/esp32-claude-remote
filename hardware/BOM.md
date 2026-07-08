@@ -17,7 +17,7 @@ You already have the **ESP32 board**, so that line is marked *(have)*.
 
 | # | Part | Qty | AliExpress search term | ~$ | Notes |
 |---|------|-----|------------------------|----|-------|
-| 1 | ESP32-S3 dev board *(have)* | 1 | `ESP32-S3 DevKitC N16R8` | 7 | S3 recommended for audio + PSRAM. Any ESP32 works for text-only. |
+| 1 | ESP32-WROOM-32 DevKit (USB-C) *(have)* | 1 | `ESP32 WROOM-32 development board type-c` | 6 | Your board. Dual-core, WiFi+BT, no PSRAM — fine for this build. Pin map: [firmware/PINMAP.md](../firmware/PINMAP.md). |
 | 2 | **Color TFT display — ST7789 1.9" 170×320 IPS SPI** | 1 | `ST7789 1.9 inch IPS 170x320 SPI` | 6 | Best readability. Alternatives below. |
 | 3 | Tactile push buttons 6×6×6mm (100 pc bag) | 1 | `6x6x6 tactile push button through hole` | 2 | We need ~7; buy a bag. |
 | 4 | Breadboard 830 points | 1 | `830 point breadboard MB-102` | 3 | For prototyping before soldering. |
@@ -48,9 +48,12 @@ You already have the **ESP32 board**, so that line is marked *(have)*.
 | 10 | LiPo battery 3.7V ~1200mAh w/ JST-PH | 1 | `3.7V 1200mAh lipo battery JST` | 6 | Batteries sometimes ship slowly/restricted — order early. 103450 size fits nicely. |
 | 11 | TP4056 USB-C charging module **with protection** | 1 (5-pk) | `TP4056 USB-C charging module protection` | 2 | Get the version with the extra protection IC (DW01). |
 | 12 | Slide switch SPDT (on/off), 10 pc | 1 | `SS12D00 slide switch` | 1.5 | Cuts battery power. |
-| 13 | (Optional) MT3608 boost converter | 1 | `MT3608 boost converter` | 1 | Only if a module needs a stable 5V from the LiPo. Usually not needed. |
+| 13 | **MT3608 boost converter** *(required for WROOM-32 battery use)* | 1 | `MT3608 boost converter` | 1 | The WROOM-32's onboard regulator needs ~5V in, so the 3.7V LiPo must be boosted to 5V. |
 
-> **Power note:** Most ESP32 dev boards have an onboard regulator. Feed the LiPo (3.7–4.2V) into the board's **5V/VIN** pin only if its regulator accepts down to ~3.5V; otherwise wire the LiPo through the TP4056 and into 3V3 **only if** your board lets you bypass the regulator. When in doubt, tell me your exact board and I'll give the exact wiring.
+> **Power note (your WROOM-32):** wire it as
+> `LiPo → TP4056 → slide switch → MT3608 (set to 5.0V) → board 5V pin`.
+> Full details in [firmware/PINMAP.md](../firmware/PINMAP.md#power-battery). Never run
+> battery + USB at the same time.
 
 ---
 
@@ -95,19 +98,11 @@ You already have the **ESP32 board**, so that line is marked *(have)*.
 
 ---
 
-## Pin budget sanity check (bare ESP32-S3)
+## Pin map (your ESP32-WROOM-32)
 
-| Block | Pins |
-|-------|------|
-| ST7789 TFT (SPI): SCLK, MOSI, CS, DC, RST, BLK | 6 |
-| INMP441 mic (I2S): BCLK, WS, SD | 3 |
-| Buttons: 5 fixed + encoder (A/B/SW) | ~8 |
-| **Total** | **~17** |
-
-An ESP32-S3 has plenty of GPIO for this. If you go with a pin-limited board or add
-more buttons, the **analog button ladder** (all buttons → one ADC pin via resistors from
-kit #18) or a **PCF8574 I2C I/O expander** (`PCF8574 I2C module`, ~$1) collapses many
-buttons onto few pins. Tell me your board and I'll finalize the exact pin map.
+The exact, conflict-checked wiring lives in **[firmware/PINMAP.md](../firmware/PINMAP.md)**:
+ST7789 on VSPI, INMP441 on I2S0, a rotary encoder + 4 buttons — 16 of the WROOM-32's
+GPIOs, avoiding the flash pins (6–11), input-only pins (34–39), and strapping pins.
 
 ---
 
