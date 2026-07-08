@@ -140,6 +140,30 @@ void pollSerial() {
 }
 
 // ---- setup / loop ----------------------------------------------------------
+void onWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
+  if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+    uint8_t reason = info.wifi_sta_disconnected.reason;
+    // Common: 201 NO_AP_FOUND (wrong SSID / 5GHz / out of range),
+    //         15 4WAY_HANDSHAKE_TIMEOUT & 2 AUTH_EXPIRE (wrong password).
+    Serial.printf("\n[wifi] disconnected, reason=%u %s\n", reason,
+                  reason == 201 ? "(NO_AP_FOUND: wrong SSID or 5GHz network)" :
+                  (reason == 15 || reason == 2) ? "(likely wrong password)" : "");
+  }
+}
+
+void scanWiFi() {
+  Serial.println("[wifi] scanning for 2.4GHz networks the ESP32 can see…");
+  WiFi.mode(WIFI_STA);
+  int n = WiFi.scanNetworks();
+  if (n <= 0) { Serial.println("[wifi]   (none found)"); return; }
+  for (int i = 0; i < n; i++) {
+    Serial.printf("[wifi]   %2d) \"%s\"  (rssi %d, ch %d, %s)\n", i + 1,
+                  WiFi.SSID(i).c_str(), WiFi.RSSI(i), WiFi.channel(i),
+                  WiFi.encryptionType(i) == WIFI_AUTH_OPEN ? "open" : "secured");
+  }
+  WiFi.scanDelete();
+}
+
 void connectWiFi() {
   Serial.printf("[wifi] connecting to \"%s\"", WIFI_SSID);
   WiFi.mode(WIFI_STA);
@@ -160,6 +184,8 @@ void setup() {
   Serial.begin(115200);
   delay(300);
   Serial.println("\n=== Claude Remote — ESP32 smoke test ===");
+  WiFi.onEvent(onWiFiEvent);
+  scanWiFi();
   connectWiFi();
   ws.begin(BRIDGE_HOST, BRIDGE_PORT, "/");
   ws.onEvent(webSocketEvent);
@@ -169,7 +195,9 @@ void setup() {
 void loop() {
   ws.loop();
   pollSerial();
-  if (WiFi.status() != WL_CONNECTED) {   // recover dropped WiFi
-    connectWiFi();
+  static uint32_t lastTry = 0;
+  if (WiFi.status() != WL_CONNECTED && millis() - lastTry > 10000) {
+    lastTry = millis();
+    connectWiFi();                        // retry dropped WiFi, backed off
   }
 }
