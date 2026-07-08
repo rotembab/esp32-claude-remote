@@ -1,0 +1,5 @@
+claude-agent-sdk
+websockets
+python-dotenv
+faster-whisper
+numpy
