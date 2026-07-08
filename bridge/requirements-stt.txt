@@ -1,0 +1,6 @@
+# Speech-to-text extras for push-to-talk (Milestone 2). Install later:
+#   pip install -r requirements-stt.txt
+# Note: on very new Python versions these may lack prebuilt wheels. If install
+# fails, use Python 3.12/3.13 for the bridge, or a cloud STT instead.
+numpy
+faster-whisper

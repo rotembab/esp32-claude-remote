@@ -35,7 +35,6 @@ import json
 import os
 import uuid
 
-import numpy as np
 import websockets
 from dotenv import load_dotenv
 
@@ -81,9 +80,14 @@ def get_whisper():
 
 
 def transcribe_pcm16(pcm_bytes: bytes) -> str:
-    """Transcribe raw 16-bit LE PCM mono @16kHz to text."""
+    """Transcribe raw 16-bit LE PCM mono @16kHz to text.
+
+    numpy + faster-whisper are imported lazily so the bridge runs (and the
+    smoke test works) even if the speech-to-text extras aren't installed yet.
+    """
     if not pcm_bytes:
         return ""
+    import numpy as np  # lazy: only needed for push-to-talk
     audio = np.frombuffer(pcm_bytes, dtype=np.int16).astype(np.float32) / 32768.0
     segments, _ = get_whisper().transcribe(audio, language=None, vad_filter=True)
     return "".join(seg.text for seg in segments).strip()

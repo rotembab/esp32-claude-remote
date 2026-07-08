@@ -1,5 +1,4 @@
+# Core bridge — everything needed for the smoke test + display/buttons.
 claude-agent-sdk
 websockets
 python-dotenv
-faster-whisper
-numpy
