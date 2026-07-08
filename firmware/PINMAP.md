@@ -8,18 +8,43 @@ encoder + 4 buttons**. Chosen to avoid the WROOM-32 gotchas:
 - Strapping pins (0, 2, 5, 12, 15) are used here only as **outputs** or left alone.
 - ADC2 pins can't do analog reads while WiFi is on — we don't use analog buttons, so fine.
 
-## Display — ST7789 TFT (SPI / VSPI)
+## Display — SHCHV 2.4" RPi LCD, ILI9341 320×240 (SPI / VSPI)
 
-| TFT pin | ESP32 GPIO |
-|---------|-----------|
-| SCLK / SCK  | 18 |
-| MOSI / SDA  | 23 |
-| CS          | 5  |
-| DC / RS     | 16 |
-| RST         | 17 |
-| BLK (backlight) | 4 |
-| VCC | 3V3 |
-| GND | GND |
+This is an SPI ILI9341 panel (Waveshare 2.4" RPi LCD (A) clone) with XPT2046 resistive
+touch, 3.3 V logic. It plugs onto a Pi 40-pin header; for the ESP32 you run jumpers from
+the relevant **header positions** to ESP32 GPIOs. The standard mapping (⚠ **confirm
+against your board's silkscreen** — clones vary):
+
+| Signal | RPi header pin (BCM) | ESP32 GPIO |
+|--------|----------------------|-----------|
+| SCLK   | 23 (GPIO11) | 18 |
+| MOSI (SDI) | 19 (GPIO10) | 23 |
+| LCD CS | 24 (CE0/GPIO8) | 5 |
+| LCD DC / RS | 18 (GPIO24) | 16 |
+| RESET  | 22 (GPIO25) | 17 |
+| Backlight (LED/BL) | 12 (GPIO18) | 4 *(or tie to 3V3 for always-on)* |
+| 3V3    | 1 | 3V3 |
+| GND    | 6 | GND |
+
+TFT_eSPI driver: **ILI9341_DRIVER**, 320×240.
+
+### Touchscreen (optional — wire later if you want on-screen input)
+
+| Signal | RPi header pin (BCM) | ESP32 GPIO |
+|--------|----------------------|-----------|
+| MISO (shared SPI) | 21 (GPIO9) | 19 *(frees only if PTT moved)* |
+| Touch CS (T_CS)   | 26 (CE1/GPIO7) | 15 |
+| Touch IRQ (T_IRQ) | 11 (GPIO17) | 2 |
+
+> Touch shares SCLK/MOSI with the display and adds MISO. Note MISO on **19** would
+> collide with the Push-to-talk button below — if you enable touch, I'll move PTT to a
+> free pin. The first firmware is **display-only** (no MISO/touch needed), so there's no
+> conflict yet.
+
+### Alternative: ST7789 1.9" TFT
+
+If you use an ST7789 instead: same SPI pins (SCLK 18, MOSI 23, CS 5, DC 16, RST 17,
+BLK 4), driver `ST7789_DRIVER`, and no touch.
 
 ## Microphone — INMP441 (I2S0)
 
