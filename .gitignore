@@ -14,6 +14,9 @@ models/
 *.bin
 *.pt
 
+# Local firmware secrets (WiFi creds live here)
+firmware/**/config.h
+
 # PlatformIO / firmware build artifacts
 firmware/.pio/
 firmware/.vscode/
